@@ -1,0 +1,2 @@
+terminate_command: echo terminate
+wait_completion_command: echo wait_completion
