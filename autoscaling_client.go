@@ -12,8 +12,9 @@ var (
 	ErrInvalidAPIResponse = errors.New("AWS API response is invalid")
 	ErrAlreadyTerminated  = errors.New("The instance has already terminated")
 
-	// TODO
+	// TODO make it configurable
 	lifecycleActionResult = "ABANDON"
+	region                = "us-east-1"
 )
 
 type autoscalingClient struct {
@@ -24,6 +25,7 @@ func NewAutoscalingClient() (*autoscalingClient, error) {
 	creds := credentials.NewEnvCredentials()
 	sess, err := session.NewSession(&aws.Config{
 		Credentials: creds,
+		Region:      &region,
 	})
 	if err != nil {
 		return nil, err

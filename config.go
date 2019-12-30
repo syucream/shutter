@@ -3,6 +3,7 @@ package main
 import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"time"
 )
 
 type Config struct {
@@ -15,9 +16,19 @@ type Watcher struct {
 }
 
 type Finisher struct {
-	LifecycleHookName      string `yaml:"lifecycle_hook_name"`
-	StartCompletionCommand string `yaml:"start_command"`
-	WaitCompletionCommand  string `yaml:"wait_command"`
+	LifecycleHookName string    `yaml:"lifecycle_hook_name"`
+	Terminate         Terminate `yaml:"terminate"`
+	Wait              Wait      `yaml:"wait"`
+}
+
+type Terminate struct {
+	Command string `yaml:"command"`
+}
+
+type Wait struct {
+	Command     string        `yaml:"command"`
+	IntervalSec time.Duration `yaml:"interval_sec"`
+	MaxTries    int64         `yaml:"max_tries"`
 }
 
 func NewConfig(name string) (*Config, error) {

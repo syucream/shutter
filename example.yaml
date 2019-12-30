@@ -1,2 +1,10 @@
-terminate_command: echo terminate
-wait_completion_command: echo wait_completion
+watcher:
+  autoscaling_group_name: test
+finisher:
+  lifecycle_hook_name: test
+  terminate:
+    command: echo terminate
+  wait:
+    command: echo wait
+    interval_sec: 60
+    max_tries: 30

@@ -2,14 +2,19 @@ package main
 
 import (
 	"flag"
-	"github.com/aws/aws-sdk-go/service/autoscaling"
-	"golang.org/x/sync/errgroup"
+	"go.uber.org/zap"
 	"log"
 )
 
 func main() {
 	file := flag.String("file", "", "a config file path")
+	daemon := flag.Bool("daemon", false, "do as daemon")
 	flag.Parse()
+
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	config, err := NewConfig(*file)
 	if err != nil {
@@ -21,26 +26,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	eg := errgroup.Group{}
-	ch := make(chan autoscaling.Instance, 16)
+	if *daemon {
+		err = DoForever(client, config, logger)
+	} else {
+		err = DoOnce(client, config, logger)
+	}
 
-	watcher := NewWatcher(client, config)
-	eg.Go(func() error {
-		return watcher.Start(ch)
-	})
-
-	eg.Go(func() error {
-		for {
-			i := <-ch
-			finisher := NewFinisher(client, config, *i.InstanceId)
-
-			eg.Go(func() error {
-				return finisher.Process()
-			})
-		}
-	})
-
-	err = eg.Wait()
 	if err != nil {
 		log.Fatal(err)
 	}

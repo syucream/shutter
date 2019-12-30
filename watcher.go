@@ -2,18 +2,23 @@ package main
 
 import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
+	"go.uber.org/zap"
 	"time"
 )
+
+const terminatingLifecycleState = "Terminating:Wait"
 
 type watcher struct {
 	client *autoscalingClient
 	config *Config
+	logger *zap.Logger
 }
 
-func NewWatcher(client *autoscalingClient, config *Config) *watcher {
+func NewWatcher(client *autoscalingClient, config *Config, logger *zap.Logger) *watcher {
 	return &watcher{
 		client: client,
 		config: config,
+		logger: logger,
 	}
 }
 
@@ -22,13 +27,15 @@ func (w *watcher) Watch() ([]autoscaling.Instance, error) {
 	if err != nil {
 		return nil, err
 	}
+	w.logger.Info("describe instances under the autoscaling group", zap.Reflect("instances", g.Instances))
 
 	instances := []autoscaling.Instance{}
 	for _, i := range g.Instances {
-		if *i.LifecycleState == "Terminating" {
+		if *i.LifecycleState == terminatingLifecycleState {
 			instances = append(instances, *i)
 		}
 	}
+	w.logger.Info("filter terminating instances", zap.Reflect("instances", instances))
 
 	return instances, nil
 }

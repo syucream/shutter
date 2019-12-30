@@ -1,54 +1,67 @@
 package main
 
 import (
-	"log"
+	"go.uber.org/zap"
+	"time"
 )
 
 type state int
 
 const (
 	initState state = iota
-	startCompletionState
-	waitCompletionState
+	terminateState
+	waitState
 	completedState
 	finishedState
 	abortedState
 )
 
 type finisher struct {
-	config *Config
-	state  state
-	err    error
-
-	instanceId        string
-	autoscalingClinet *autoscalingClient
+	config     *Config
+	state      state
+	err        error
+	instanceId string
+	client     *autoscalingClient
+	logger     *zap.Logger
 }
 
-func (f *finisher) initStateHandler() state {
-	log.Println(f)
-	return startCompletionState
+func (f *finisher) initHandler() state {
+	f.logger.Info("init handler")
+
+	return terminateState
 }
 
-func (f *finisher) startCompletionStateHandler() (state, error) {
-	err := DoCommand(f.config.Finisher.StartCompletionCommand)
+func (f *finisher) terminateHandler() (state, error) {
+	f.logger.Info("terminate handler")
+
+	err := DoCommand(f.config.Finisher.Terminate.Command)
 	if err != nil {
 		return abortedState, err
 	}
 
-	return waitCompletionState, nil
+	return waitState, nil
 }
 
-func (f *finisher) waitCompletionStateHandler() (state, error) {
-	err := DoCommand(f.config.Finisher.WaitCompletionCommand)
-	if err != nil {
-		return abortedState, err
+func (f *finisher) waitHandler() (state, error) {
+	f.logger.Info("wait handler")
+
+	for i := int64(0); i < f.config.Finisher.Wait.MaxTries; i++ {
+		err := DoCommand(f.config.Finisher.Wait.Command)
+		if err == nil {
+			break
+		}
+
+		f.logger.Info("command failed; will be retried", zap.Error(err))
+		time.Sleep(time.Second * f.config.Finisher.Wait.IntervalSec)
 	}
 
 	return completedState, nil
 }
 
-func (f *finisher) completeStateHandler() (state, error) {
-	err := f.autoscalingClinet.CompleteLifecycleAction(f.instanceId, f.config.Finisher.LifecycleHookName)
+func (f *finisher) completeHandler() (state, error) {
+	f.logger.Info("complete handler")
+
+	err := f.client.CompleteLifecycleAction(f.instanceId, f.config.Finisher.LifecycleHookName)
 	if err != nil {
 		return abortedState, err
 	}
@@ -56,17 +69,18 @@ func (f *finisher) completeStateHandler() (state, error) {
 	return finishedState, nil
 }
 
-func (f *finisher) finishedStateHandler() {
-	log.Println(f)
+func (f *finisher) finishedHandler() {
+	f.logger.Info("finish handler")
 }
 
-func NewFinisher(client *autoscalingClient, c *Config, instanceId string) *finisher {
+func NewFinisher(client *autoscalingClient, c *Config, logger *zap.Logger, instanceId string) *finisher {
 	return &finisher{
-		config:            c,
-		state:             initState,
-		err:               nil,
-		instanceId:        instanceId,
-		autoscalingClinet: client,
+		config:     c,
+		state:      initState,
+		err:        nil,
+		instanceId: instanceId,
+		client:     client,
+		logger:     logger,
 	}
 }
 
@@ -76,18 +90,19 @@ func (f *finisher) Do() {
 
 	switch f.state {
 	case initState:
-		next = f.initStateHandler()
-	case startCompletionState:
-		next, err = f.startCompletionStateHandler()
-	case waitCompletionState:
-		next, err = f.waitCompletionStateHandler()
+		next = f.initHandler()
+	case terminateState:
+		next, err = f.terminateHandler()
+	case waitState:
+		next, err = f.waitHandler()
 	case completedState:
-		next, err = f.completeStateHandler()
+		next, err = f.completeHandler()
 	case finishedState:
-		f.finishedStateHandler()
+		f.finishedHandler()
 	}
 
 	if err != nil {
+		f.logger.Error("error occured in a handler", zap.Error(err))
 		f.err = err
 	}
 	f.state = next
@@ -101,6 +116,7 @@ func (f *finisher) Process() error {
 	for {
 		f.Do()
 		if f.IsFinished() {
+			f.logger.Info("finisher processes are finished")
 			break
 		}
 	}
