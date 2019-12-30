@@ -12,7 +12,8 @@ type Config struct {
 }
 
 type Watcher struct {
-	AutoscalingGroupName string `yaml:"autoscaling_group_name"`
+	AutoscalingGroupName string        `yaml:"autoscaling_group_name"`
+	IntervalSec          time.Duration `yaml:"interval_sec"`
 }
 
 type Finisher struct {

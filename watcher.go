@@ -51,6 +51,6 @@ func (w *watcher) Start(channel chan autoscaling.Instance) error {
 			channel <- i
 		}
 
-		time.Sleep(time.Second * 60)
+		time.Sleep(time.Second * w.config.Watcher.IntervalSec)
 	}
 }

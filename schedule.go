@@ -15,7 +15,7 @@ func DoOnce(client *autoscalingClient, config *Config, logger *zap.Logger) error
 
 	eg := errgroup.Group{}
 	for _, i := range instances {
-		finisher := NewFinisher(client, config, *i.InstanceId)
+		finisher := NewFinisher(client, config, logger, *i.InstanceId)
 		eg.Go(func() error {
 			return finisher.Process()
 		})
@@ -36,7 +36,7 @@ func DoForever(client *autoscalingClient, config *Config, logger *zap.Logger) er
 	eg.Go(func() error {
 		for {
 			i := <-ch
-			finisher := NewFinisher(client, config, *i.InstanceId)
+			finisher := NewFinisher(client, config, logger, *i.InstanceId)
 
 			eg.Go(func() error {
 				return finisher.Process()

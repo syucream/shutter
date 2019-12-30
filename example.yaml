@@ -1,5 +1,6 @@
 watcher:
   autoscaling_group_name: test
+  interval_sec: 60
 finisher:
   lifecycle_hook_name: test
   terminate:
