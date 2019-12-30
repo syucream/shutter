@@ -6,8 +6,18 @@ import (
 )
 
 type Config struct {
-	TerminateCommand      string `yaml:"terminate_command"`
-	WaitCompletionCommand string `yaml:"wait_completion_command"`
+	Watcher  Watcher  `yaml:"watcher"`
+	Finisher Finisher `yaml:"finisher"`
+}
+
+type Watcher struct {
+	AutoscalingGroupName string `yaml:"autoscaling_group_name"`
+}
+
+type Finisher struct {
+	LifecycleHookName      string `yaml:"lifecycle_hook_name"`
+	StartCompletionCommand string `yaml:"start_command"`
+	WaitCompletionCommand  string `yaml:"wait_command"`
 }
 
 func NewConfig(name string) (*Config, error) {
