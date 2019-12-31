@@ -1,4 +1,4 @@
-package main
+package shutter
 
 import (
 	"gopkg.in/yaml.v2"

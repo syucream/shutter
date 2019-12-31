@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/syucream/shutter"
 	"go.uber.org/zap"
 	"log"
 )
@@ -16,20 +17,20 @@ func main() {
 		log.Fatal(err)
 	}
 
-	config, err := NewConfig(*file)
+	config, err := shutter.NewConfig(*file)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	client, err := NewAwsClient(config)
+	client, err := shutter.NewAwsClient(config)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	if *daemon {
-		err = DoForever(client, config, logger)
+		err = shutter.DoForever(client, config, logger)
 	} else {
-		err = DoOnce(client, config, logger)
+		err = shutter.DoOnce(client, config, logger)
 	}
 
 	if err != nil {

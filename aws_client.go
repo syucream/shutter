@@ -1,4 +1,4 @@
-package main
+package shutter
 
 import (
 	"errors"
@@ -14,12 +14,21 @@ var (
 	ErrAlreadyTerminated  = errors.New("The instance has already terminated")
 )
 
-type awsClient struct {
+// A minimum AWS client
+type AwsClient interface {
+	DescribeAutoscalingGroup(name string) (*autoscaling.Group, error)
+	DescribeInstance(instanceId string) (*ec2.Instance, error)
+	DescribeInstanceDetails(instanceId string) (*autoscaling.InstanceDetails, error)
+	CompleteLifecycleAction(instanceId string, lifecycleActionResult, lifecycleHook string) error
+}
+
+type awsClientImpl struct {
+	AwsClient
 	ec2Client *ec2.EC2
 	asClient  *autoscaling.AutoScaling
 }
 
-func NewAwsClient(config *Config) (*awsClient, error) {
+func NewAwsClient(config *Config) (AwsClient, error) {
 	creds := credentials.NewEnvCredentials()
 	sess, err := session.NewSession(&aws.Config{
 		Credentials: creds,
@@ -29,13 +38,13 @@ func NewAwsClient(config *Config) (*awsClient, error) {
 		return nil, err
 	}
 
-	return &awsClient{
+	return &awsClientImpl{
 		ec2Client: ec2.New(sess),
 		asClient:  autoscaling.New(sess),
 	}, nil
 }
 
-func (c *awsClient) DescribeAutoscalingGroup(name string) (*autoscaling.Group, error) {
+func (c *awsClientImpl) DescribeAutoscalingGroup(name string) (*autoscaling.Group, error) {
 	res, err := c.asClient.DescribeAutoScalingGroups(&autoscaling.DescribeAutoScalingGroupsInput{
 		AutoScalingGroupNames: []*string{&name},
 	})
@@ -50,7 +59,7 @@ func (c *awsClient) DescribeAutoscalingGroup(name string) (*autoscaling.Group, e
 	return res.AutoScalingGroups[0], nil
 }
 
-func (c *awsClient) DescribeInstance(instanceId string) (*ec2.Instance, error) {
+func (c *awsClientImpl) DescribeInstance(instanceId string) (*ec2.Instance, error) {
 	name := "instance-id"
 
 	res, err := c.ec2Client.DescribeInstances(&ec2.DescribeInstancesInput{
@@ -72,7 +81,7 @@ func (c *awsClient) DescribeInstance(instanceId string) (*ec2.Instance, error) {
 	return res.Reservations[0].Instances[0], nil
 }
 
-func (c *awsClient) DescribeInstanceDetails(instanceId string) (*autoscaling.InstanceDetails, error) {
+func (c *awsClientImpl) DescribeInstanceDetails(instanceId string) (*autoscaling.InstanceDetails, error) {
 	res, err := c.asClient.DescribeAutoScalingInstances(&autoscaling.DescribeAutoScalingInstancesInput{
 		InstanceIds: []*string{&instanceId},
 	})
@@ -87,7 +96,7 @@ func (c *awsClient) DescribeInstanceDetails(instanceId string) (*autoscaling.Ins
 	return res.AutoScalingInstances[0], nil
 }
 
-func (c *awsClient) CompleteLifecycleAction(instanceId string, lifecycleActionResult, lifecycleHook string) error {
+func (c *awsClientImpl) CompleteLifecycleAction(instanceId string, lifecycleActionResult, lifecycleHook string) error {
 	details, err := c.DescribeInstanceDetails(instanceId)
 	if err != nil {
 		return err

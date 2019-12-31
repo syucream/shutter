@@ -1,4 +1,4 @@
-package main
+package shutter
 
 import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
@@ -6,15 +6,19 @@ import (
 	"time"
 )
 
-const terminatingLifecycleState = "Terminating:Wait"
+var (
+	inServiceLifecycleState   = "InService"
+	terminatingLifecycleState = "Terminating:Wait"
+)
 
+// watcher watches terminating EC2 instances under a Lifecycle Hook
 type watcher struct {
-	client *awsClient
+	client AwsClient
 	config *Config
 	logger *zap.Logger
 }
 
-func NewWatcher(client *awsClient, config *Config, logger *zap.Logger) *watcher {
+func NewWatcher(client AwsClient, config *Config, logger *zap.Logger) *watcher {
 	return &watcher{
 		client: client,
 		config: config,

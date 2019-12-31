@@ -1,4 +1,4 @@
-package main
+package shutter
 
 import (
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -20,5 +20,20 @@ func TestRender(t *testing.T) {
 
 	if actual != expected {
 		t.Fatal("actual doesn't match expected", actual)
+	}
+}
+
+func TestDoCommand(t *testing.T) {
+	validCommand := "echo hoge"
+	invalidCommand := "cat /path/to/noexistent.txt"
+
+	_, err := DoCommand(validCommand)
+	if err != nil {
+		t.Fatal("it should not fail", err)
+	}
+
+	ec, _ := DoCommand(invalidCommand)
+	if ec == 0 {
+		t.Fatal("it should fail", ec)
 	}
 }

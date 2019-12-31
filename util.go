@@ -1,4 +1,4 @@
-package main
+package shutter
 
 import (
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -18,11 +18,17 @@ func Render(commands string, instance *ec2.Instance) string {
 	return replaced
 }
 
-func DoCommand(commands string) error {
+func DoCommand(commands string) (int, error) {
 	cmds, err := parser.Parse(commands)
 	if err != nil {
-		return err
+		return 1, err
 	}
 
-	return exec.Command(cmds[0], cmds[1:]...).Start()
+	cmd := exec.Command(cmds[0], cmds[1:]...)
+	err = cmd.Start()
+	if err != nil {
+		return 1, err
+	}
+
+	return cmd.ProcessState.ExitCode(), nil
 }

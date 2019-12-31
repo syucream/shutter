@@ -1,4 +1,4 @@
-package main
+package shutter
 
 import (
 	"go.uber.org/zap"
@@ -16,12 +16,13 @@ const (
 	abortedState
 )
 
+// finisher is a state machine finalize Autoscaling Lifecycle Hook
 type finisher struct {
 	config     *Config
 	state      state
 	err        error
 	instanceId string
-	client     *awsClient
+	client     AwsClient
 	logger     *zap.Logger
 }
 
@@ -41,7 +42,7 @@ func (f *finisher) terminateHandler() (state, error) {
 	cmd := Render(f.config.Finisher.Terminate.Command, instance)
 	f.logger.Info("execute terminate command", zap.String("cmd", cmd))
 
-	err = DoCommand(cmd)
+	_, err = DoCommand(cmd)
 	if err != nil {
 		return abortedState, err
 	}
@@ -60,8 +61,12 @@ func (f *finisher) waitHandler() (state, error) {
 	f.logger.Info("execute wait command", zap.String("cmd", cmd))
 
 	for i := int64(0); i < f.config.Finisher.Wait.MaxTries; i++ {
-		err := DoCommand(cmd)
-		if err == nil {
+		ec, err := DoCommand(cmd)
+		if err != nil {
+			return abortedState, err
+		}
+
+		if ec == 0 {
 			break
 		}
 
@@ -87,7 +92,7 @@ func (f *finisher) finishedHandler() {
 	f.logger.Info("finish handler")
 }
 
-func NewFinisher(client *awsClient, c *Config, logger *zap.Logger, instanceId string) *finisher {
+func NewFinisher(client AwsClient, c *Config, logger *zap.Logger, instanceId string) *finisher {
 	return &finisher{
 		config:     c,
 		state:      initState,
