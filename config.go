@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	Watcher  Watcher  `yaml:"watcher"`
-	Finisher Finisher `yaml:"finisher"`
+	AwsRegion string   `yaml:"aws_region"`
+	Watcher   Watcher  `yaml:"watcher"`
+	Finisher  Finisher `yaml:"finisher"`
 }
 
 type Watcher struct {
@@ -17,9 +18,10 @@ type Watcher struct {
 }
 
 type Finisher struct {
-	LifecycleHookName string    `yaml:"lifecycle_hook_name"`
-	Terminate         Terminate `yaml:"terminate"`
-	Wait              Wait      `yaml:"wait"`
+	LifecycleHookName     string    `yaml:"lifecycle_hook_name"`
+	LifecycleActionResult string    `yaml:"lifecycle_action_result"`
+	Terminate             Terminate `yaml:"terminate"`
+	Wait                  Wait      `yaml:"wait"`
 }
 
 type Terminate struct {

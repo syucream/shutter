@@ -21,7 +21,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	client, err := NewAutoscalingClient()
+	client, err := NewAwsClient(config)
 	if err != nil {
 		log.Fatal(err)
 	}

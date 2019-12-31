@@ -9,12 +9,12 @@ import (
 const terminatingLifecycleState = "Terminating:Wait"
 
 type watcher struct {
-	client *autoscalingClient
+	client *awsClient
 	config *Config
 	logger *zap.Logger
 }
 
-func NewWatcher(client *autoscalingClient, config *Config, logger *zap.Logger) *watcher {
+func NewWatcher(client *awsClient, config *Config, logger *zap.Logger) *watcher {
 	return &watcher{
 		client: client,
 		config: config,

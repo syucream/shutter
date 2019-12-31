@@ -21,7 +21,7 @@ type finisher struct {
 	state      state
 	err        error
 	instanceId string
-	client     *autoscalingClient
+	client     *awsClient
 	logger     *zap.Logger
 }
 
@@ -34,7 +34,14 @@ func (f *finisher) initHandler() state {
 func (f *finisher) terminateHandler() (state, error) {
 	f.logger.Info("terminate handler")
 
-	err := DoCommand(f.config.Finisher.Terminate.Command)
+	instance, err := f.client.DescribeInstance(f.instanceId)
+	if err != nil {
+		return abortedState, err
+	}
+	cmd := Render(f.config.Finisher.Terminate.Command, instance)
+	f.logger.Info("execute terminate command", zap.String("cmd", cmd))
+
+	err = DoCommand(cmd)
 	if err != nil {
 		return abortedState, err
 	}
@@ -45,8 +52,15 @@ func (f *finisher) terminateHandler() (state, error) {
 func (f *finisher) waitHandler() (state, error) {
 	f.logger.Info("wait handler")
 
+	instance, err := f.client.DescribeInstance(f.instanceId)
+	if err != nil {
+		return abortedState, err
+	}
+	cmd := Render(f.config.Finisher.Wait.Command, instance)
+	f.logger.Info("execute wait command", zap.String("cmd", cmd))
+
 	for i := int64(0); i < f.config.Finisher.Wait.MaxTries; i++ {
-		err := DoCommand(f.config.Finisher.Wait.Command)
+		err := DoCommand(cmd)
 		if err == nil {
 			break
 		}
@@ -61,7 +75,7 @@ func (f *finisher) waitHandler() (state, error) {
 func (f *finisher) completeHandler() (state, error) {
 	f.logger.Info("complete handler")
 
-	err := f.client.CompleteLifecycleAction(f.instanceId, f.config.Finisher.LifecycleHookName)
+	err := f.client.CompleteLifecycleAction(f.instanceId, f.config.Finisher.LifecycleActionResult, f.config.Finisher.LifecycleHookName)
 	if err != nil {
 		return abortedState, err
 	}
@@ -73,7 +87,7 @@ func (f *finisher) finishedHandler() {
 	f.logger.Info("finish handler")
 }
 
-func NewFinisher(client *autoscalingClient, c *Config, logger *zap.Logger, instanceId string) *finisher {
+func NewFinisher(client *awsClient, c *Config, logger *zap.Logger, instanceId string) *finisher {
 	return &finisher{
 		config:     c,
 		state:      initState,

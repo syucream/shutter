@@ -6,7 +6,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func DoOnce(client *autoscalingClient, config *Config, logger *zap.Logger) error {
+func DoOnce(client *awsClient, config *Config, logger *zap.Logger) error {
 	watcher := NewWatcher(client, config, logger)
 	instances, err := watcher.Watch()
 	if err != nil {
@@ -24,7 +24,7 @@ func DoOnce(client *autoscalingClient, config *Config, logger *zap.Logger) error
 	return eg.Wait()
 }
 
-func DoForever(client *autoscalingClient, config *Config, logger *zap.Logger) error {
+func DoForever(client *awsClient, config *Config, logger *zap.Logger) error {
 	eg := errgroup.Group{}
 	ch := make(chan autoscaling.Instance, 16)
 
