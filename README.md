@@ -1,2 +1,3 @@
 # shutter
-[WIP] A simple daemon does shutdown gracefully EC2 instances under Autoscaling Group and Lifecycle Hook
+
+A single daemon based graceful shutdown manager for EC2 instances under an Autoscaling Group and a Lifecycle Hook

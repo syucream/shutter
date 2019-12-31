@@ -4,7 +4,6 @@ require (
 	github.com/aws/aws-sdk-go v1.26.8
 	github.com/creack/pty v1.1.9 // indirect
 	github.com/kr/pty v1.1.8 // indirect
-	github.com/looplab/fsm v0.1.0
 	github.com/mattn/go-shellwords v1.0.6
 	github.com/rogpeppe/go-internal v1.5.1 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect

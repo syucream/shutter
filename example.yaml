@@ -6,6 +6,7 @@ finisher:
   lifecycle_hook_name: test
   lifecycle_action_result: ABANDON
   terminate:
+    # it should have idempotency
     command: "ping -c 5 ${PUBLIC_IP_ADDRESS}"
   wait:
     command: "ping -c 5 ${PUBLIC_IP_ADDRESS}"
