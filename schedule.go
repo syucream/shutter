@@ -24,6 +24,11 @@ func DoOnce(client AwsClient, config *Config, logger *zap.Logger) error {
 	return eg.Wait()
 }
 
+func DoOnceWithInstanceId(client AwsClient, config *Config, logger *zap.Logger, instanceId string) error {
+	finisher := NewFinisher(client, config, logger, instanceId)
+	return finisher.Process()
+}
+
 func DoForever(client AwsClient, config *Config, logger *zap.Logger) error {
 	eg := errgroup.Group{}
 	ch := make(chan autoscaling.Instance, 16)

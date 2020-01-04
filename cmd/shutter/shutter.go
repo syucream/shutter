@@ -10,6 +10,7 @@ import (
 func main() {
 	file := flag.String("file", "", "a config file path")
 	daemon := flag.Bool("daemon", false, "do as daemon")
+	instanceId := flag.String("instanceid", "", "EC2 instance id (optional, used if daemon = false)")
 	flag.Parse()
 
 	logger, err := zap.NewProduction()
@@ -30,7 +31,11 @@ func main() {
 	if *daemon {
 		err = shutter.DoForever(client, config, logger)
 	} else {
-		err = shutter.DoOnce(client, config, logger)
+		if *instanceId != "" {
+			err = shutter.DoOnceWithInstanceId(client, config, logger, *instanceId)
+		} else {
+			err = shutter.DoOnce(client, config, logger)
+		}
 	}
 
 	if err != nil {

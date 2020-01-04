@@ -14,6 +14,8 @@ Usage of ./shutter:
         do as daemon
   -file string
         a config file path
+  -instanceid string
+        EC2 instance id (optional, used if daemon = false)
 ```
 
 The yaml configuration layout is here:
