@@ -6,17 +6,19 @@ import (
 )
 
 func TestRender(t *testing.T) {
+	instanceId := "i-1234abcd"
 	publicIpAddr := "8.8.8.8"
 	privateIpAddr := "192.168.0.1"
 
 	instance := &ec2.Instance{
+		InstanceId:       &instanceId,
 		PublicIpAddress:  &publicIpAddr,
 		PrivateIpAddress: &privateIpAddr,
 	}
-	source := "${PUBLIC_IP_ADDRESS} ; ${PRIVATE_IP_ADDRESS}"
+	source := "${INSTANCE_ID} ; ${PUBLIC_IP_ADDRESS} ; ${PRIVATE_IP_ADDRESS}"
 
 	actual := Render(source, instance)
-	expected := "8.8.8.8 ; 192.168.0.1"
+	expected := "i-1234abcd ; 8.8.8.8 ; 192.168.0.1"
 
 	if actual != expected {
 		t.Fatal("actual doesn't match expected", actual)

@@ -21,6 +21,7 @@ Usage of ./shutter:
 The yaml configuration layout is here:
 Especially about `command` part, you can use these replacement will be replaced by actual instance values on runtime.
 
+- `${INSTANCE_ID}`, an EC2 instance id
 - `${PUBLIC_IP_ADDRESS}`, a public IP address for an EC2 instance
 - `${PRIVATE_IP_ADDRESS}`, a private IP address for an EC2 instance
 

@@ -12,8 +12,17 @@ var parser = shellwords.NewParser()
 func Render(commands string, instance *ec2.Instance) string {
 	replaced := commands
 
-	replaced = strings.ReplaceAll(replaced, "${PUBLIC_IP_ADDRESS}", *instance.PublicIpAddress)
-	replaced = strings.ReplaceAll(replaced, "${PRIVATE_IP_ADDRESS}", *instance.PrivateIpAddress)
+	if instance.InstanceId != nil {
+		replaced = strings.ReplaceAll(replaced, "${INSTANCE_ID}", *instance.InstanceId)
+	}
+
+	if instance.PublicIpAddress != nil {
+		replaced = strings.ReplaceAll(replaced, "${PUBLIC_IP_ADDRESS}", *instance.PublicIpAddress)
+	}
+
+	if instance.PrivateIpAddress != nil {
+		replaced = strings.ReplaceAll(replaced, "${PRIVATE_IP_ADDRESS}", *instance.PrivateIpAddress)
+	}
 
 	return replaced
 }
