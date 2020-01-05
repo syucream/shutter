@@ -10,3 +10,8 @@ build:
 .PHONY: test
 test:
 	go test -cover .
+
+# Set GITHUB_TOKEN and create release git tag
+.PHONY: release
+release:
+	goreleaser --rm-dist
