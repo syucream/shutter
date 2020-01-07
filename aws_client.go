@@ -3,7 +3,6 @@ package shutter
 import (
 	"errors"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -29,11 +28,7 @@ type awsClientImpl struct {
 }
 
 func NewAwsClient(config *Config) (AwsClient, error) {
-	creds := credentials.NewEnvCredentials()
-	sess, err := session.NewSession(&aws.Config{
-		Credentials: creds,
-		Region:      &config.AwsRegion,
-	})
+	sess, err := session.NewSession(aws.NewConfig().WithRegion(config.AwsRegion))
 	if err != nil {
 		return nil, err
 	}

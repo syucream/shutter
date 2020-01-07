@@ -17,3 +17,6 @@ shutter
 
 # GoLand
 .idea/
+
+# goreleaser
+dist/
