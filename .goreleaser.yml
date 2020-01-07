@@ -3,7 +3,7 @@ before:
     - go mod tidy
 builds:
 - main: cmd/shutter/shutter.go
-- env:
+  env:
   - CGO_ENABLED=0
 archives:
 - replacements:
