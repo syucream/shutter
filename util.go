@@ -3,6 +3,7 @@ package shutter
 import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/mattn/go-shellwords"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -27,17 +28,18 @@ func Render(commands string, instance *ec2.Instance) string {
 	return replaced
 }
 
-func DoCommand(commands string) (int, error) {
+func DoCommand(commands string) (*os.ProcessState, error) {
 	cmds, err := parser.Parse(commands)
 	if err != nil {
-		return 1, err
+		return nil, err
 	}
 
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 	err = cmd.Start()
 	if err != nil {
-		return 1, err
+		return nil, err
 	}
+	_ = cmd.Wait()
 
-	return cmd.ProcessState.ExitCode(), nil
+	return cmd.ProcessState, nil
 }

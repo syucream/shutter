@@ -34,8 +34,8 @@ func TestDoCommand(t *testing.T) {
 		t.Fatal("it should not fail", err)
 	}
 
-	ec, _ := DoCommand(invalidCommand)
-	if ec == 0 {
-		t.Fatal("it should fail", ec)
+	s, _ := DoCommand(invalidCommand)
+	if s.Success() {
+		t.Fatal("it should fail", s)
 	}
 }

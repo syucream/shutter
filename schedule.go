@@ -6,6 +6,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+const maxChanSize = 16
+
 func DoOnce(client AwsClient, config *Config, logger *zap.Logger) error {
 	watcher := NewWatcher(client, config, logger)
 	instances, err := watcher.Watch()
@@ -31,7 +33,7 @@ func DoOnceWithInstanceId(client AwsClient, config *Config, logger *zap.Logger, 
 
 func DoForever(client AwsClient, config *Config, logger *zap.Logger) error {
 	eg := errgroup.Group{}
-	ch := make(chan autoscaling.Instance, 16)
+	ch := make(chan autoscaling.Instance, maxChanSize)
 
 	watcher := NewWatcher(client, config, logger)
 	eg.Go(func() error {

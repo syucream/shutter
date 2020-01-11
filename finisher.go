@@ -61,16 +61,16 @@ func (f *finisher) waitHandler() (state, error) {
 	f.logger.Info("execute wait command", zap.String("cmd", cmd))
 
 	for i := int64(0); i < f.config.Finisher.Wait.MaxTries; i++ {
-		ec, err := DoCommand(cmd)
+		s, err := DoCommand(cmd)
 		if err != nil {
 			return abortedState, err
 		}
 
-		if ec == 0 {
+		if s.Success() {
 			break
 		}
 
-		f.logger.Info("command failed; will be retried", zap.Error(err))
+		f.logger.Info("command failed; will be retried", zap.Int("exit code", s.ExitCode()))
 		time.Sleep(time.Second * f.config.Finisher.Wait.IntervalSec)
 	}
 
@@ -135,7 +135,7 @@ func (f *finisher) Process() error {
 	for {
 		f.Do()
 		if f.IsFinished() {
-			f.logger.Info("finisher processes are finished")
+			f.logger.Info("All finisher tasks are finished")
 			break
 		}
 	}
