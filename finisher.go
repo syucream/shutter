@@ -18,12 +18,13 @@ const (
 
 // finisher is a state machine finalize Autoscaling Lifecycle Hook
 type finisher struct {
-	config     *Config
-	state      state
-	err        error
-	instanceId string
-	client     AwsClient
-	logger     *zap.Logger
+	InstanceId string
+
+	config *Config
+	state  state
+	err    error
+	client AwsClient
+	logger *zap.Logger
 }
 
 func (f *finisher) initHandler() state {
@@ -35,7 +36,7 @@ func (f *finisher) initHandler() state {
 func (f *finisher) terminateHandler() (state, error) {
 	f.logger.Info("terminate handler")
 
-	instance, err := f.client.DescribeInstance(f.instanceId)
+	instance, err := f.client.DescribeInstance(f.InstanceId)
 	if err != nil {
 		return abortedState, err
 	}
@@ -53,7 +54,7 @@ func (f *finisher) terminateHandler() (state, error) {
 func (f *finisher) waitHandler() (state, error) {
 	f.logger.Info("wait handler")
 
-	instance, err := f.client.DescribeInstance(f.instanceId)
+	instance, err := f.client.DescribeInstance(f.InstanceId)
 	if err != nil {
 		return abortedState, err
 	}
@@ -80,7 +81,7 @@ func (f *finisher) waitHandler() (state, error) {
 func (f *finisher) completeHandler() (state, error) {
 	f.logger.Info("complete handler")
 
-	err := f.client.CompleteLifecycleAction(f.instanceId, f.config.Finisher.LifecycleActionResult, f.config.Finisher.LifecycleHookName)
+	err := f.client.CompleteLifecycleAction(f.InstanceId, f.config.Finisher.LifecycleActionResult, f.config.Finisher.LifecycleHookName)
 	if err != nil {
 		return abortedState, err
 	}
@@ -97,7 +98,7 @@ func NewFinisher(client AwsClient, c *Config, logger *zap.Logger, instanceId str
 		config:     c,
 		state:      initState,
 		err:        nil,
-		instanceId: instanceId,
+		InstanceId: instanceId,
 		client:     client,
 		logger:     logger,
 	}

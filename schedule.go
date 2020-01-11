@@ -4,6 +4,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+	"sync"
 )
 
 const maxChanSize = 16
@@ -40,13 +41,30 @@ func DoForever(client AwsClient, config *Config, logger *zap.Logger) error {
 		return watcher.Start(ch)
 	})
 
+	mux := sync.Mutex{}
+	statuses := map[autoscaling.Instance]bool{} // instance id -> isStarted
+
 	eg.Go(func() error {
 		for {
 			i := <-ch
-			finisher := NewFinisher(client, config, logger, *i.InstanceId)
 
+			if started, ok := statuses[i]; ok && started {
+				// A finisher has already started before so ignore it
+				continue
+			}
+			mux.Lock()
+			statuses[i] = true // mark started to prevent reenter
+			mux.Unlock()
+
+			finisher := NewFinisher(client, config, logger, *i.InstanceId)
 			eg.Go(func() error {
-				return finisher.Process()
+				err := finisher.Process()
+
+				mux.Lock()
+				delete(statuses, i) // release the instance id
+				mux.Unlock()
+
+				return err
 			})
 		}
 	})
