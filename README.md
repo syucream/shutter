@@ -41,3 +41,44 @@ finisher:
     interval_sec: 60
     max_tries: 30
 ```
+
+## Required minimum IAM policy
+
+```
+autoscaling:CompleteLifecycleAction
+autoscaling:DescribeAutoScalingInstances
+autoscaling:DescribeAutoScalingGroups
+ec2:DescribeInstances
+```
+
+## shutter internals
+
+### State management
+
+shutter manages terminating instance by a structure like FSM. It has below states:
+
+- init
+
+  - noop
+  
+- terminate
+
+  - Run a command to start termination. e.g. trigger graceful shutdown scripts
+  
+- wait
+
+  - Wait until a command is succeeded. e.g. trigger script checks there's no active client
+  
+  
+- complete
+
+  - Complete an instance on an autoscaling group
+  
+- finished
+
+  - noop, all tasks are succeeded
+  
+- aborted
+
+  - noop, any task failed
+  
