@@ -49,13 +49,13 @@ func DoForever(client AwsClient, config *Config, logger *zap.Logger) error {
 			i := <-ch
 			instanceId := *i.InstanceId
 
+			mux.Lock()
+
 			if started, ok := statuses[instanceId]; ok && started {
 				// A finisher has already started before so ignore it
 				continue
 			}
-			mux.Lock()
 			statuses[instanceId] = true // mark started to prevent reenter
-			mux.Unlock()
 
 			finisher := NewFinisher(client, config, logger, instanceId)
 			eg.Go(func() error {
@@ -67,6 +67,8 @@ func DoForever(client AwsClient, config *Config, logger *zap.Logger) error {
 
 				return err
 			})
+
+			mux.Unlock()
 		}
 	})
 
