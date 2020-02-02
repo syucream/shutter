@@ -41,34 +41,34 @@ func DoForever(client AwsClient, config *Config, logger *zap.Logger) error {
 		return watcher.Start(ch)
 	})
 
-	mux := sync.Mutex{}
-	statuses := map[string]bool{} // instance id -> isStarted
-
 	eg.Go(func() error {
+		mux := sync.Mutex{}
+		statuses := map[string]bool{} // started instance ids
+
 		for {
 			i := <-ch
-			instanceId := *i.InstanceId
 
-			mux.Lock()
-
-			if started, ok := statuses[instanceId]; ok && started {
-				// A finisher has already started before so ignore it
-				continue
-			}
-			statuses[instanceId] = true // mark started to prevent reenter
-
-			finisher := NewFinisher(client, config, logger, instanceId)
-			eg.Go(func() error {
-				err := finisher.Process()
-
+			func(instanceId string) {
 				mux.Lock()
-				delete(statuses, instanceId) // release the instance id
-				mux.Unlock()
+				defer mux.Unlock()
 
-				return err
-			})
+				if started, ok := statuses[instanceId]; ok && started {
+					// A finisher has already started before so ignore it
+					return
+				}
+				statuses[instanceId] = true // mark started to prevent reenter
 
-			mux.Unlock()
+				eg.Go(func() error {
+					finisher := NewFinisher(client, config, logger, instanceId)
+					err := finisher.Process()
+
+					mux.Lock()
+					defer mux.Unlock()
+					delete(statuses, instanceId) // release the instance id
+
+					return err
+				})
+			}(*i.InstanceId)
 		}
 	})
 
