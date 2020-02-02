@@ -44,15 +44,23 @@ func (w *watcher) Watch() ([]autoscaling.Instance, error) {
 	return instances, nil
 }
 
+func (w *watcher) Notify(channel chan autoscaling.Instance) error {
+	instances, err := w.Watch()
+	if err != nil {
+		return err
+	}
+
+	for _, i := range instances {
+		channel <- i
+	}
+
+	return nil
+}
+
 func (w *watcher) Start(channel chan autoscaling.Instance) error {
 	for {
-		instances, err := w.Watch()
-		if err != nil {
+		if err := w.Notify(channel); err != nil {
 			return err
-		}
-
-		for _, i := range instances {
-			channel <- i
 		}
 
 		time.Sleep(time.Second * w.config.Watcher.IntervalSec)
